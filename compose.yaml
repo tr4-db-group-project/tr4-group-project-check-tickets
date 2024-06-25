@@ -1,0 +1,38 @@
+services:
+  cloudsql-proxy:
+    image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.11.4
+    command: tr4-2024-06-deutschebank:europe-west2:myinstance --credentials-file=/app/.config/gcloud/application_default_credentials.json --address 0.0.0.0 --port 5432
+    volumes:
+      - ./sqlproxy_key.json:/credentials.json
+      - type: bind
+        source: ${HOME}/.config/gcloud
+        target: /app/.config/gcloud
+    ports:
+      - 5432:5432
+  tr4-group-project-check-tickets-app:
+    container_name: 'tr4-group-project-check-tickets'
+#    command: -e GOOGLE_APPLICATION_CREDENTIALS="/app/.config/gcloud/application_default_credentials.json" --mount type=bind,source=${HOME}/.config/gcloud,target=/app/.config/gcloud tr4-group-project-check-tickets
+#    ~/.config/gcloud/application_default_credentials.json
+#    COPY target/tr4-group-project-check-tickets-1.0-SNAPSHOT.jar tr4-group-project-check-tickets-1.0-SNAPSHOT.jar
+    ##ENV GOOGLE_APPLICATION_CREDENTIALS '~/.config/gcloud/application_default_credentials.json'
+    environment:
+      - 'GOOGLE_APPLICATION_CREDENTIALS=/app/.config/gcloud/application_default_credentials.json'
+    volumes:
+      - type: bind
+        source: ${HOME}/.config/gcloud
+        target: /app/.config/gcloud
+    build:
+      dockerfile: 'Dockerfile'
+    image: 'tr4-group-project-check-tickets:latest'
+    ports:
+      - '8080:8080'
+    depends_on:
+      - cloudsql-proxy
+      - flyway
+  flyway:
+    image: flyway/flyway
+    command: -url=jdbc:postgresql://cloudsql-proxy:5432/eventdb -schemas=eventdb -user=postgres -password=secret -connectRetries=60 migrate
+    volumes:
+      - ./src/main/resources/db/migration/:/flyway/sql/
+    depends_on:
+      - cloudsql-proxy
