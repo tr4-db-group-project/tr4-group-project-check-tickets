@@ -9,7 +9,7 @@ import org.springframework.web.servlet.view.RedirectView;
 @RestController
 public class WebAppController {
     @Autowired
-    private CheckTicketsApplication.PubsubOutboundGateway messagingGateway;
+    private PubSubService.PubsubOutboundGateway messagingGateway;
 
     @PostMapping("/publishMessage")
     public RedirectView publishMessage(@RequestParam("message") String message) {

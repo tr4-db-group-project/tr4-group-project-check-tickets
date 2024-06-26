@@ -5,4 +5,4 @@ CREATE TABLE IF NOT EXISTS events (
     email varchar(255)
     );
 
--- todo  proper db init with creation of db and user etc
+-- todo remove email from db
